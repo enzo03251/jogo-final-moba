@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Anime MOBA - Epic Battle Arena - Jogo de batalha épica">
+    <title>Anime MOBA - Epic Battle Arena</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Firebase Compat SDK (v8) — ÚNICA versão utilizada -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <!-- Seu game.js já limpo e com inicialização do Firebase compat -->
+    <script src="game.js"></script>
+    <script>
+    initializeFirebase();
+</script>
+
+</head>
+
+<body>
+    <!-- Tela de Login -->
+    <div id="loginScreen" class="screen active" role="main" aria-label="Tela de Login">
+        <div class="login-box">
+            <h1>⚔️ ANIME MOBA ⚔️<br>EPIC BATTLE ARENA</h1>
+            <p class="subtitle">Prepare-se para batalhas épicas!</p>
+
+            <form id="loginForm" onsubmit="return false;">
+                <label for="username" class="sr-only">Nome de Invocador</label>
+                <input type="text" id="username" placeholder="Digite seu nome de invocador" maxlength="20" minlength="3"
+                    required autocomplete="username" aria-describedby="usernameHelp">
+                <small id="usernameHelp" class="help-text">Mínimo 3 caracteres</small>
+
+                <h3 class="section-title">Escolha a Dificuldade:</h3>
+                <div class="difficulty-grid" role="group" aria-label="Seleção de Dificuldade">
+                    <button type="button" onclick="setDifficulty('easy')" class="difficulty-btn easy">
+                        😊 Fácil
+                        <span class="difficulty-desc">Inimigos -30% HP/Dano</span>
+                    </button>
+                    <button type="button" onclick="setDifficulty('normal')" class="difficulty-btn normal">
+                        😐 Normal
+                        <span class="difficulty-desc">Balanceado</span>
+                    </button>
+                    <button type="button" onclick="setDifficulty('hard')" class="difficulty-btn hard">
+                        😈 Difícil
+                        <span class="difficulty-desc">Inimigos +50% HP/Dano</span>
+                    </button>
+                    <button type="button" onclick="setDifficulty('extreme')" class="difficulty-btn extreme">
+                        💀 EXTREMO
+                        <span class="difficulty-desc">Inimigos +100% HP/Dano</span>
+                    </button>
+                </div>
+
+                <div id="difficultySelected" class="difficulty-feedback" role="status" aria-live="polite"></div>
+
+                <button type="button" onclick="login()" class="btn-primary">
+                    🎮 Entrar no Jogo
+                </button>
+                <button type="button" onclick="showLeaderboard()" class="btn-secondary">
+                    🏆 Ver Ranking
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tela de Seleção de Personagem -->
+    <div id="characterSelect" class="screen">
+        <div class="select-box">
+            <h1>Escolha seu Campeão</h1>
+            <p class="subtitle">Cada campeão possui habilidades únicas e estilos de jogo diferentes</p>
+
+            <div class="characters" id="characterGrid"></div>
+
+            <button onclick="startGame()" class="btn-primary btn-large" id="startGameBtn">
+                ⚔️ Iniciar Batalha!
+            </button>
+        </div>
+    </div>
+
+    <!-- Tela da Loja -->
+    <div id="shopScreen" class="screen">
+        <div class="shop-box">
+            <h1>🛒 Loja de Itens</h1>
+            <div class="gold-display" id="shopGold">💰 Ouro: 0</div>
+
+            <div id="shopItems" class="shop-grid"></div>
+
+            <button onclick="closeShop()" class="btn-primary">
+                ← Voltar à Batalha
+            </button>
+        </div>
+    </div>
+
+    <!-- Tela do Jogo -->
+    <div id="gameScreen" class="screen">
+        <canvas id="gameCanvas" width="1000" height="700"></canvas>
+
+        <!-- UI do Jogador -->
+        <div class="game-ui" id="playerStats">
+            <div id="playerName" class="player-name"></div>
+            <div>Nível: <span id="playerLevel">1</span></div>
+
+            <div class="health-bar">
+                <div class="health-fill" id="playerHealth"></div>
+                <div class="bar-text" id="healthText">100/100</div>
+            </div>
+
+            <div class="mana-bar">
+                <div class="mana-fill" id="playerMana"></div>
+                <div class="bar-text" id="manaText">100/100</div>
+            </div>
+
+            <div class="exp-bar">
+                <div class="exp-fill" id="playerExp"></div>
+                <div class="bar-text" id="expText">0/100</div>
+            </div>
+
+            <div id="playerScore" class="score-display">Pontos: 0</div>
+            <div class="gold-display">💰 <span id="goldAmount">0</span></div>
+        </div>
+
+        <!-- UI do Inimigo -->
+        <div class="game-ui" id="enemyStats">
+            <div class="enemy-title">Boss Atual</div>
+            <div id="enemyName">Inimigo</div>
+
+            <div class="health-bar">
+                <div class="health-fill" id="enemyHealth"></div>
+                <div class="bar-text" id="enemyHealthText">0/0</div>
+            </div>
+
+            <div>Inimigos Restantes: <span id="enemyCount">0</span></div>
+        </div>
+
+        <!-- Controles -->
+        <div class="game-ui" id="controls">
+            <button class="skill-btn" onclick="useSkill(1)" id="skill1">⚡ Skill 1 (1)</button>
+            <button class="skill-btn" onclick="useSkill(2)" id="skill2">🔥 Skill 2 (2)</button>
+            <button class="skill-btn" onclick="useSkill(3)" id="skill3">💫 Skill 3 (3)</button>
+            <button class="skill-btn" onclick="useSkill(4)" id="skill4">🌟 Ultimate (4)</button>
+            <button class="skill-btn shop-btn" onclick="openShop()">🛒 Loja (B)</button>
+        </div>
+
+        <!-- Mini Mapa -->
+        <div class="mini-map">
+            <canvas id="miniMapCanvas" width="200" height="150"></canvas>
+        </div>
+
+        <div id="waveIndicator"></div>
+    </div>
+
+    <!-- Tela de Game Over -->
+    <div id="gameOver" class="screen">
+        <div class="game-over-box">
+            <h1 id="resultText"></h1>
+            <p id="finalScore"></p>
+
+            <div id="statsDisplay"></div>
+
+            <button onclick="restartGame()" class="btn-primary">🔄 Jogar Novamente</button>
+            <button onclick="backToMenu()" class="btn-secondary">🏠 Menu Principal</button>
+        </div>
+    </div>
+
+    <!-- Modal Ranking -->
+    <div id="leaderboard">
+        <h2>🏆 Ranking dos Melhores Invocadores 🏆</h2>
+        <div id="leaderboardList"></div>
+        <button onclick="hideLeaderboard()" class="btn-primary">Fechar</button>
+    </div>
+
+    <div class="sr-only" id="screenReaderStatus"></div>
+
+</body>
+
+</html>

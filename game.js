@@ -2131,4 +2131,3 @@ window.getTopScoresFromFirebase = getTopScoresFromFirebaseCompat;
 // NOVA FUNÇÃO: Ver stats do jogador
 
 // FIREBASE (INTEGRADO) - COLOQUE OS SCRIPTS DO SDK NO HTML (compat v8)
-
